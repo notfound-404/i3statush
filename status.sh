@@ -1,147 +1,162 @@
 #!/bin/bash
 
-# i3statush - A modular status bar for i3 written in BASH 
-#
-# Copyright (C) 2016 Yann Privé
-#
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation, either version 3 of the License, or (at your option) any later
-# version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-# details.
-#
-# You should have received a copy of the GNU General Public License along with
-# this program. If not, see http://www.gnu.org/licenses/.
+source ~/.i3/statusrc
+
 
 # Main function
 main() {
-	
-	# Local variables
-	local i3_vol=' INIT'
-	local i3_date=' INIT'
-	local i3_cpu='CPU: INIT'
-	local i3_ram='RAM: INIT'
-	local rx_info='0: INIT'
-	local tx_info='0: INIT'
-	
-	# Infinite loop
-	while true
-	do
+    # Local variables
+    local i3_vol=' INIT'
+    local i3_date=' INIT'
+    local i3_cpu='CPU: INIT'
+    local i3_ram='RAM: INIT'
+    local i3_temp=""
+    local rx_info='0: INIT'
+    local tx_info='0: INIT'
 
-		# Switch on the seconds value
-		case "$(date '+%S')" in
-		
-			# Called every 2 seconds
-			[0-5][02468])
-				i3_vol=$(get_volume)
-				;;&
+    # Infinite loop
+    while true; do
 
-			# Called every 5 seconds
-			[0-5][05])
-				i3_date=$(get_date)
-				;;&
-		
-			# Called every second
-			*)
+        # Switch on the seconds value
+        case "$(date '+%S')" in
 
-				# Gets the CPU and RAM usage
-				# i3_cpu=$(get_cpu_usage)
-				# i3_ram=$(get_ram_usage)
-				
-				# Gets the network usage
-				rx_info=$(get_net_info 'rx' "${rx_info%:*}")
-				tx_info=$(get_net_info 'tx' "${tx_info%:*}")
-				;;
+            # Called every 2 seconds
+            [0-5][02468])
+            i3_vol=$(get_volume)
+            i3_temp=$(get_temp)
+            ;;&
 
-		esac
-	
-		# Echo the line
-		echo "${rx_info#*:} - ${tx_info#*:} | ${i3_vol} | ${i3_date}"
+            # Called every 5 seconds
+            #[0-5][05])
+            #i3_date=$(get_date) ;;&
 
-		# Sleep 1 second
-		sleep 1
+            # Called every second
+            *)
 
-	done
+            # Gets the CPU and RAM usage
+            # i3_cpu=$(get_cpu_usage)
+            # i3_ram=$(get_ram_usage)
 
-	return 0
+            i3_date=$(get_date)
+
+            # Gets the network usage
+            rx_info=$(get_net_info 'rx' "${rx_info%:*}" "$INTERFACE_WIFI")
+            tx_info=$(get_net_info 'tx' "${tx_info%:*}" "$INTERFACE_WIFI")
+            ;;&
+
+        esac
+
+        # Echo the statusbar line
+        echo "${rx_info#*:} - ${tx_info#*:} $SEP ${i3_vol}  $SEP  ${i3_temp}  $SEP  $(_get_battery)  $SEP  $(_get_loadavg) $SEP  ${i3_date}"
+
+        # Sleep 1 second
+        sleep 1
+
+    done
+
+    return 0
+}
+
+_get_battery(){
+    #   
+    # 
+    local BATTERY=$(awk -F'[ ,]' '/Battery 0/{if(!a[$0]++){print $3, $5, $7}}' <<< "$(acpi -V)" |head -n1)
+    [[ "$BATTERY" =~ Discharging.([[:digit:]]+%).(.*$) ]] \
+        && echo " ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}" \
+        || echo "  ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+}
+
+_get_loadavg(){
+    # 
+    local LOADAVG=($(awk '{print $1, $2, $3}' /proc/loadavg))
+    local RET
+    for VAL in "${LOADAVG[@]}"; do
+        if awk '{exit $1>$2?0:1}' <<< "$VAL ${ALERTLOADAVG}"; then
+            RET+="$R$VAL$N "
+        elif awk '{exit $1<$2?0:1}'<<< "$VAL ${WARNINGLOADAVG}"; then
+            RET+="$G$VAL$N "
+        else RET+="$Y$VAL$N "
+        fi
+    done
+    echo -e "  $RET"
 }
 
 # Gets the current volume
 get_volume() {
-	
-	# Local variables
-	local amixer_vol vol_string
-	
-	# Call amixer to get the current volume
-	amixer_vol=$(amixer get Master | grep -m 1 -Eo '[0-9]+%')
-	amixer_vol=${amixer_vol::-1}
-	
-	# Use the right icon
-	if [[ "$amixer_vol" -eq 0 ]]
-	then
-		vol_string=" MUTE"
-	
-	elif [[ "$amixer_vol" -gt 0 && "$amixer_vol" -le 50 ]]
-	then
-		vol_string=$(printf ' %3s%%' "${amixer_vol}")
 
-	else
-		vol_string=$(printf ' %3s%%' "${amixer_vol}")
-	fi
+    # Local variables
+    local amixer_vol vol_string amixer_status
 
-	# Echoes the volume
-	echo "$vol_string"
+    # Call amixer to get the current volume
+    amixer_vol=$(amixer get Master | grep -m 1 -Eo '[0-9]+%')
+    amixer_status=$(amixer get Master | awk -F'[][]' '/Front Left.*Play/{print $4}')
+    amixer_vol=${amixer_vol::-1}
 
-	return 0
+    # Use the right icon
+    [[ "$amixer_status" == "on" ]] && {
+        if [[ "$amixer_vol" -eq 0 ]]
+       then
+           vol_string=" 0%"
+
+       elif [[ "$amixer_vol" -gt 0 && "$amixer_vol" -le 50 ]]
+       then
+           vol_string=$(printf ' %3s%%' "${amixer_vol}")
+
+       else
+           vol_string=$(printf ' %3s%%' "${amixer_vol}")
+       fi
+   } || { amixer_status="  ${Y}Muted$N" ; }
+
+    # Echoes the volume
+    echo -e "${vol_string:-$amixer_status}"
+
+    return 0
 }
 
 # Gets the current date
 get_date() {
 
-	# Return the date
-	echo " $(date '+%d/%m/%y %T')"
+    # Return the date
+    echo -n "  $(date '+%d/%m/%y') "
+    echo "  $(date '+%T')"
 
-	return 0
+    return 0
 }
 
 # Gets the network information
 get_net_info() {
-	
-	# Local variables
-	local link_way=$1
-	local link_bytes_prev=$2
-	local link_bytes_cur
-	local link_speed
-	local link_string
-	
-	# Get the number of bytes sent / received & gets the speed
-	link_bytes_cur=$(cat /sys/class/net/eth0/statistics/${link_way}_bytes)
-	link_speed=$(((link_bytes_cur - link_bytes_prev) * 8))
 
-	# Depending on the speed, show the right format
-	if [[ "$link_speed" -lt 1000 ]]
-	then
+    # Local variables
+    local link_way=$1
+    local link_bytes_prev=$2
+    local device=$3
+    local link_bytes_cur
+    local link_speed
+    local link_string
 
-		link_string=$(printf '%4s bps' "${link_speed}")
-	
-	elif [[ "$link_speed" -ge 1000 && "$link_speed" -lt 1000000 ]]
-	then
-		link_string=$(printf '%3s kbps' "$((link_speed / 1000))")
-	
-	else
-		link_string=$(printf '%3s Mbps' "$((link_speed / 1000000))")
-	fi
+    # Get the number of bytes sent / received & gets the speed
+    link_bytes_cur=$(</sys/class/net/${device}/statistics/${link_way}_bytes)
+    link_speed=$(((link_bytes_cur - link_bytes_prev) * 8))
 
-	# Return the current number of bytes and the string to display
-	[[ "$link_way" == 'rx' ]] \
-		&& echo "${link_bytes_cur}: ${link_string}" \
-		|| echo "${link_bytes_cur}: ${link_string}"
+    # Depending on the speed, show the right format
+    [[ "$link_speed" -lt 1000 ]] \
+        && link_string=$(printf '%4s bps' "${link_speed}") \
+        || { [[ "$link_speed" -ge 1000 && "$link_speed" -lt 1000000 ]] \
+           && link_string=$(printf '%3s kbps' "$((link_speed / 1000))") ; } \
+    || link_string=$(printf '%3s Mbps' "$((link_speed / 1000000))")
 
-	return 0
+    # Return the current number of bytes and the string to display
+    [[ "$link_way" == 'rx' ]] \
+        && echo "${link_bytes_cur}: ${link_string}" \
+        || echo "${link_bytes_cur}: ${link_string}"
+
+    return 0
+}
+
+get_temp(){
+    local TEMP
+    TEMP="$(( $(</sys/class/hwmon/hwmon0/temp2_input) / 1000 ))"
+    echo "$TEMP °C"
 }
 
 main
