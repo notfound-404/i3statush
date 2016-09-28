@@ -64,7 +64,7 @@ main() {
 		esac
 
 		# Echo the statusbar line
-		echo "${rx_info#*:} - ${tx_info#*:} $SEP ${i3_vol}  $SEP  ${i3_temp}  $SEP  $(_get_battery)  $SEP  $(_get_loadavg) $SEP  ${i3_date}"
+                echo "${rx_info#*:} - ${tx_info#*:} $SEP ${i3_vol}  $SEP  ${i3_temp}  $SEP  $(_get_battery)  $SEP $(_get_cpu) - $(_get_ram) - $(_get_loadavg) $SEP  ${i3_date}"
 
 		# Sleep 1 second
 		sleep 1
@@ -72,6 +72,22 @@ main() {
 	done
 
 	return 0
+}
+
+_get_ram(){
+    awk '{
+            a[i++]=$2
+        }END{
+            printf "RAM: %d/%dMB (%.2f%%)\n", a[1]/1024, a[0]/1024, a[1]*100/a[0]
+        }' <(grep -Pe "MemTotal|MemFree" /proc/meminfo)
+}
+
+_get_cpu(){
+    awk '/cpu /{
+        cpu=($2+$4)*100/($2+$4+$5)
+        } END {
+            printf "CPU: %.4s%", cpu
+        }' /proc/stat
 }
 
 _get_battery(){
