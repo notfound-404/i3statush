@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
 
-source ~/.i3/statusrc
+source ~/.i3/i3status.conf
 
 
 # Main function
@@ -30,6 +30,14 @@ main() {
 	local i3_temp=""
 	local rx_info='0: INIT'
 	local tx_info='0: INIT'
+        local net="_get_net"
+        local sound="_get_volume"
+        local temp="_get_temp"
+        local battery="_get_battery"
+        local cpu="_get_cpu"
+        local ram="_get_ram"
+        local loadavg="_get_loadavg"
+        local date="_get_date"
 
 	# Infinite loop
 	while true; do
@@ -38,10 +46,10 @@ main() {
 		case "$(date '+%S')" in
 
 		    # Called every 2 seconds
-		    [0-5][02468])
-		    i3_vol=$(get_volume)
-		    i3_temp=$(get_temp)
-		    ;;&
+		    #[0-5][02468])
+		    #i3_vol=$(get_volume)
+		    #i3_temp=$(get_temp)
+		    #;;&
 
 		    # Called every 5 seconds
 		    #[0-5][05])
@@ -54,17 +62,22 @@ main() {
 		    # i3_cpu=$(get_cpu_usage)
 		    # i3_ram=$(get_ram_usage)
 
-		    i3_date=$(get_date)
+		    i3_date=$(_get_date)
 
 		    # Gets the network usage
-		    rx_info=$(get_net_info 'rx' "${rx_info%:*}" "$INTERFACE_WIFI")
-		    tx_info=$(get_net_info 'tx' "${tx_info%:*}" "$INTERFACE_WIFI")
+		    rx_info=$(_get_net_info 'rx' "${rx_info%:*}" "$INTERFACE_WIFI")
+		    tx_info=$(_get_net_info 'tx' "${tx_info%:*}" "$INTERFACE_WIFI")
 		    ;;&
 
 		esac
 
 		# Echo the statusbar line
-                echo "${rx_info#*:} - ${tx_info#*:} $SEP ${i3_vol}  $SEP  ${i3_temp}  $SEP  $(_get_battery)  $SEP $(_get_cpu) - $(_get_ram) - $(_get_loadavg) $SEP  ${i3_date}"
+                echo "${rx_info#*:} - ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP  $(_get_battery) $SEP $(_get_cpu) - $(_get_ram) - $(_get_loadavg) $SEP  ${i3_date}"
+                # echo "ok"
+                #echo ${MYBAR[*]}
+                #for feature in ${MYBAR[*]}; do
+                 #   eval $feature
+                #done
 
 		# Sleep 1 second
 		sleep 1
@@ -96,7 +109,11 @@ _get_battery(){
 	local BATTERY=$(awk -F'[ ,]' '/Battery 0/{if(!a[$0]++){print $3, $5, $7}}' <<< "$(acpi -V)" |head -n1)
 	[[ "$BATTERY" =~ Discharging.([[:digit:]]+%).(.*$) ]] \
 		&& echo " ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}" \
-		|| echo "  ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+		|| {
+                    [[ -z ${BASH_REMATCH} ]] \
+                        && echo "  $BATTERY" \
+                        || echo "  ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+                }
 }
 
 _get_loadavg(){
@@ -115,7 +132,7 @@ _get_loadavg(){
 }
 
 # Gets the current volume
-get_volume() {
+_get_volume() {
 
 	# Local variables
 	local amixer_vol vol_string amixer_status
@@ -147,7 +164,7 @@ get_volume() {
 }
 
 # Gets the current date
-get_date() {
+_get_date() {
 
 	# Return the date
 	echo -n "  $(date '+%d/%m/%y') "
@@ -157,7 +174,7 @@ get_date() {
 }
 
 # Gets the network information
-get_net_info() {
+_get_net_info() {
 
 	# Local variables
 	local link_way=$1
@@ -186,10 +203,10 @@ get_net_info() {
 	return 0
 }
 
-get_temp(){
+_get_temp(){
 	local TEMP
 	TEMP="$(( $(</sys/class/hwmon/hwmon0/temp2_input) / 1000 ))"
-	echo "$TEMP °C"
+	echo "$TEMP°C"
 }
 
 main
