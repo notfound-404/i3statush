@@ -93,16 +93,15 @@ _get_battery(){
 	# 
 	local BATTERY=$(awk -F'[ ,]' '/Battery 0/{if(!a[$0]++){print $3, $5, $7}}' <<< "$(acpi -V)" |head -n1)
 	[[ "$BATTERY" =~ Discharging.([[:digit:]]+%).(.*$) ]] \
-		&& echo " ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}" \
-		|| {
-					[[ -z ${BASH_REMATCH} ]] \
-						&& echo "	$BATTERY" \
-						|| echo "	${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
-				}
+	&& echo " ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}" \
+	|| {
+		[[ -z ${BASH_REMATCH} ]] \
+		&& echo "	$BATTERY" \
+		|| echo "	${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+	}
 }
 
-_get_loadavg(){
-	# 
+_get_loadavg(){ 
 	local LOADAVG=($(awk '{print $1, $2, $3}' /proc/loadavg))
 	local RET
 	for VAL in "${LOADAVG[@]}"; do
@@ -118,7 +117,6 @@ _get_loadavg(){
 
 # Gets the current volume
 _get_volume() {
-
 	# Local variables
 	local amixer_vol vol_string amixer_status
 
@@ -128,7 +126,8 @@ _get_volume() {
 	amixer_vol=${amixer_vol::-1}
 
 	# Use the right icon
-	[[ "$amixer_status" == "on" ]] && {
+	[[ "$amixer_status" == "on" ]] \
+	&& {
 		if [[ "$amixer_vol" -eq 0 ]]
 	   then
 		   vol_string=" 0%"
@@ -140,27 +139,22 @@ _get_volume() {
 	   else
 		   vol_string=$(printf ' %3s%%' "${amixer_vol}")
 	   fi
-   } || { amixer_status="	${Y}Muted$N" ; }
+	} || { amixer_status="	${Y}Muted$N" ; }
 
 	# Echoes the volume
 	echo -e "${vol_string:-$amixer_status}"
-
-	return 0
 }
+
 
 # Gets the current date
 _get_date() {
-
-	# Return the date
 	echo -n "	$(date '+%d/%m/%y') "
 	echo "  $(date '+%T')"
-
-	return 0
 }
+
 
 # Gets the network information
 _get_net_info() {
-
 	# Local variables
 	local link_way=$1
 	local link_bytes_prev=$2
@@ -176,8 +170,10 @@ _get_net_info() {
 	# Depending on the speed, show the right format
 	[[ "$link_speed" -lt 1000 ]] \
 		&& link_string=$(printf '%4s bps' "${link_speed}") \
-		|| { [[ "$link_speed" -ge 1000 && "$link_speed" -lt 1000000 ]] \
-		   && link_string=$(printf '%3s kbps' "$((link_speed / 1000))") ; } \
+		|| { 
+			[[ "$link_speed" -ge 1000 && "$link_speed" -lt 1000000 ]] \
+				&& link_string=$(printf '%3s kbps' "$((link_speed / 1000))")
+		} \
 	|| link_string=$(printf '%3s Mbps' "$((link_speed / 1000000))")
 
 	# Return the current number of bytes and the string to display
