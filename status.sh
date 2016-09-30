@@ -19,7 +19,6 @@
 
 source ~/.i3/i3status.conf
 
-
 # Main function
 main() {
 	# Local variables
@@ -30,54 +29,40 @@ main() {
 	local i3_temp=""
 	local rx_info='0: INIT'
 	local tx_info='0: INIT'
-        local net="_get_net"
-        local sound="_get_volume"
-        local temp="_get_temp"
-        local battery="_get_battery"
-        local cpu="_get_cpu"
-        local ram="_get_ram"
-        local loadavg="_get_loadavg"
-        local date="_get_date"
+	local net="_get_net"
+	local sound="_get_volume"
+	local temp="_get_temp"
+	local battery="_get_battery"
+	local cpu="_get_cpu"
+	local ram="_get_ram"
+	local loadavg="_get_loadavg"
+	local date="_get_date"
 
 	# Infinite loop
 	while true; do
-
 		# Switch on the seconds value
 		case "$(date '+%S')" in
+			# Called every 2 seconds : [0-5][02468])
+			# Called every 5 seconds : [0-5][05])
 
-		    # Called every 2 seconds
-		    #[0-5][02468])
-		    #i3_vol=$(get_volume)
-		    #i3_temp=$(get_temp)
-		    #;;&
+			# Called every second
+			*)
 
-		    # Called every 5 seconds
-		    #[0-5][05])
-		    #i3_date=$(get_date) ;;&
+			i3_date=$(_get_date)
 
-		    # Called every second
-		    *)
-
-		    # Gets the CPU and RAM usage
-		    # i3_cpu=$(get_cpu_usage)
-		    # i3_ram=$(get_ram_usage)
-
-		    i3_date=$(_get_date)
-
-		    # Gets the network usage
-		    rx_info=$(_get_net_info 'rx' "${rx_info%:*}" "$INTERFACE_WIFI")
-		    tx_info=$(_get_net_info 'tx' "${tx_info%:*}" "$INTERFACE_WIFI")
-		    ;;&
+			# Gets the network usage
+			rx_info=$(_get_net_info 'rx' "${rx_info%:*}" "$INTERFACE_WIFI")
+			tx_info=$(_get_net_info 'tx' "${tx_info%:*}" "$INTERFACE_WIFI")
+			;;&
 
 		esac
 
 		# Echo the statusbar line
-                echo "${rx_info#*:} - ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP  $(_get_battery) $SEP $(_get_cpu) - $(_get_ram) - $(_get_loadavg) $SEP  ${i3_date}"
-                # echo "ok"
-                #echo ${MYBAR[*]}
-                #for feature in ${MYBAR[*]}; do
-                 #   eval $feature
-                #done
+		echo "${rx_info#*:} - ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP	$(_get_battery) $SEP $(_get_cpu) - $(_get_ram) - $(_get_loadavg) $SEP  ${i3_date}"
+
+		#for feature in ${MYBAR[*]}; do
+		 #	 eval $feature
+		#done
 
 		# Sleep 1 second
 		sleep 1
@@ -88,19 +73,19 @@ main() {
 }
 
 _get_ram(){
-    awk '{
-            a[i++]=$2
-        }END{
-            printf "RAM: %d/%dMB (%.2f%%)\n", a[1]/1024, a[0]/1024, a[1]*100/a[0]
-        }' <(grep -Pe "MemTotal|MemFree" /proc/meminfo)
+	awk '{
+			a[i++]=$2
+		}END{
+			printf "RAM: %d/%dMB (%.2f%%)\n", a[1]/1024, a[0]/1024, a[1]*100/a[0]
+		}' <(grep -Pe "MemTotal|MemFree" /proc/meminfo)
 }
 
 _get_cpu(){
-    awk '/cpu /{
-        cpu=($2+$4)*100/($2+$4+$5)
-        } END {
-            printf "CPU: %.4s%", cpu
-        }' /proc/stat
+	awk '/cpu /{
+		cpu=($2+$4)*100/($2+$4+$5)
+		} END {
+			printf "CPU: %.4s%", cpu
+		}' /proc/stat
 }
 
 _get_battery(){
@@ -110,10 +95,10 @@ _get_battery(){
 	[[ "$BATTERY" =~ Discharging.([[:digit:]]+%).(.*$) ]] \
 		&& echo " ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}" \
 		|| {
-                    [[ -z ${BASH_REMATCH} ]] \
-                        && echo "  $BATTERY" \
-                        || echo "  ${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
-                }
+					[[ -z ${BASH_REMATCH} ]] \
+						&& echo "	$BATTERY" \
+						|| echo "	${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+				}
 }
 
 _get_loadavg(){
@@ -122,13 +107,13 @@ _get_loadavg(){
 	local RET
 	for VAL in "${LOADAVG[@]}"; do
 		if awk '{exit $1>$2?0:1}' <<< "$VAL ${ALERTLOADAVG}"; then
-		    RET+="$R$VAL$N "
+			RET+="$R$VAL$N "
 		elif awk '{exit $1<$2?0:1}'<<< "$VAL ${WARNINGLOADAVG}"; then
-		    RET+="$G$VAL$N "
+			RET+="$G$VAL$N "
 		else RET+="$Y$VAL$N "
 		fi
 	done
-	echo -e "  $RET"
+	echo -e "	$RET"
 }
 
 # Gets the current volume
@@ -155,7 +140,7 @@ _get_volume() {
 	   else
 		   vol_string=$(printf ' %3s%%' "${amixer_vol}")
 	   fi
-   } || { amixer_status="  ${Y}Muted$N" ; }
+   } || { amixer_status="	${Y}Muted$N" ; }
 
 	# Echoes the volume
 	echo -e "${vol_string:-$amixer_status}"
@@ -167,7 +152,7 @@ _get_volume() {
 _get_date() {
 
 	# Return the date
-	echo -n "  $(date '+%d/%m/%y') "
+	echo -n "	$(date '+%d/%m/%y') "
 	echo "  $(date '+%T')"
 
 	return 0
