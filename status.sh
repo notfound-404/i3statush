@@ -74,10 +74,10 @@ main() {
 
 _get_ram(){
 	awk '{
-			a[i++]=$2
-		}END{
-			printf "RAM: %d/%dMB (%.2f%%)\n", a[1]/1024, a[0]/1024, a[1]*100/a[0]
-		}' <(grep -Pe "MemTotal|MemFree" /proc/meminfo)
+            a[i++]=$2
+	    }END{
+                printf "RAM: %d/%dMB (%.2f%%)\n", a[1]/1024, a[0]/1024, a[1]*100/a[0]
+	}' <(grep -Pe "MemTotal|MemFree" /proc/meminfo)
 }
 
 _get_cpu(){
