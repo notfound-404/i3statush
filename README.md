@@ -14,3 +14,7 @@ To install i3statush:
 
 ## Licence
 i3statush is released under the GPLv3 licence.
+
+## TODO
+@IP
+Colors
