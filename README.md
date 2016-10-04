@@ -9,5 +9,8 @@ To install i3statush:
 - Simply copy the script in your `~/.i3/` folder for example, or clone this repository to update it easily.
 - Modify your `~/.i3/config` file so that you have under the "bar" section: `status_command /home/<user>/.i3/status.sh`
 
+## Screenshot
+![Alt text](https://www.notfound.ovh/SCREEN/Screenshot-2016-10-04-22-35-36_869x17.png "Output")
+
 ## Licence
 i3statush is released under the GPLv3 licence.
