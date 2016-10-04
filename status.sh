@@ -63,8 +63,6 @@ main() {
 		#for feature in ${MYBAR[*]}; do
 		 #	 eval $feature
 		#done
-
-		# Sleep 1 second
 		sleep 1
 
 	done
@@ -112,7 +110,7 @@ _get_loadavg(){
 		else RET+="$Y$VAL$N "
 		fi
 	done
-	echo -e " $RET"
+	echo -e "  $RET"
 }
 
 # Gets the current volume
@@ -147,8 +145,8 @@ _get_volume() {
 
 # Gets the current date
 _get_date() {
-	echo -n " $(date '+%d/%m/%y') "
-	echo " $(date '+%T')"
+	echo -n "  $(date '+%d/%m/%y') "
+	echo "  $(date '+%T')"
 }
 
 
