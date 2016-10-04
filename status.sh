@@ -58,7 +58,7 @@ main() {
 		esac
 
 		# Echo the statusbar line
-		echo "${rx_info#*:} - ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP	$(_get_battery) $SEP $(_get_cpu) $SEP $(_get_ram) $SEP $(_get_loadavg) $SEP ${i3_date}"
+		echo "${rx_info#*:}  ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP $(_get_battery) $SEP $(_get_cpu) $SEP $(_get_ram) $SEP $(_get_loadavg) $SEP ${i3_date}"
 
 		#for feature in ${MYBAR[*]}; do
 		 #	 eval $feature
@@ -74,7 +74,7 @@ main() {
 
 _get_ram(){
 	awk '{
-            a[i++]=$2
+			a[i++]=$2
 	    }END{
                 printf "RAM: %d/%dMB (%.2f%%)\n", a[1]/1024, a[0]/1024, a[1]*100/a[0]
 	}' <(grep -Pe "MemTotal|MemFree" /proc/meminfo)
@@ -82,7 +82,7 @@ _get_ram(){
 
 _get_cpu(){
 	awk '/cpu /{
-		cpu=($2+$4)*100/($2+$4+$5)
+			cpu=($2+$4)*100/($2+$4+$5)
 		} END {
 			printf "CPU: %.4s%", cpu
 		}' /proc/stat
@@ -112,7 +112,7 @@ _get_loadavg(){
 		else RET+="$Y$VAL$N "
 		fi
 	done
-	echo -e "	$RET"
+	echo -e " $RET"
 }
 
 # Gets the current volume
@@ -138,7 +138,7 @@ _get_volume() {
 	   else
 		   vol_string=$(printf ' %3s%%' "${amixer_vol}")
 	   fi
-	} || { amixer_status="	${Y}Muted$N" ; }
+	} || { amixer_status=" ${Y}Muted$N" ; }
 
 	# Echoes the volume
 	echo -e "${vol_string:-$amixer_status}"
@@ -147,8 +147,8 @@ _get_volume() {
 
 # Gets the current date
 _get_date() {
-	echo -n "	$(date '+%d/%m/%y') "
-	echo "  $(date '+%T')"
+	echo -n " $(date '+%d/%m/%y') "
+	echo " $(date '+%T')"
 }
 
 
