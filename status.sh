@@ -58,7 +58,7 @@ main() {
 		esac
 
 		# Echo the statusbar line
-		echo "${rx_info#*:} - ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP	$(_get_battery) $SEP $(_get_cpu) - $(_get_ram) - $(_get_loadavg) $SEP  ${i3_date}"
+		echo "${rx_info#*:} - ${tx_info#*:} $SEP $(_get_volume) $SEP $(_get_temp) $SEP	$(_get_battery) $SEP $(_get_cpu) $SEP $(_get_ram) $SEP $(_get_loadavg) $SEP ${i3_date}"
 
 		#for feature in ${MYBAR[*]}; do
 		 #	 eval $feature
@@ -101,7 +101,7 @@ _get_battery(){
 	}
 }
 
-_get_loadavg(){ 
+_get_loadavg(){
 	local LOADAVG=($(awk '{print $1, $2, $3}' /proc/loadavg))
 	local RET
 	for VAL in "${LOADAVG[@]}"; do
@@ -126,8 +126,7 @@ _get_volume() {
 	amixer_vol=${amixer_vol::-1}
 
 	# Use the right icon
-	[[ "$amixer_status" == "on" ]] \
-	&& {
+	[[ "$amixer_status" == "on" ]] && {
 		if [[ "$amixer_vol" -eq 0 ]]
 	   then
 		   vol_string=" 0%"
